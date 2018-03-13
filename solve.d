@@ -1,4 +1,15 @@
-import std.file, std.stdio, core.thread, std.container.array, std.math, std.container.binaryheap, std.format, std.parallelism, core.exception, std.datetime.stopwatch: StopWatch;
+import std.file;
+import std.stdio;
+import core.thread;
+import std.container.array;
+import std.math;
+import std.container.binaryheap;
+import std.format;
+import std.parallelism;
+import core.exception;
+import std.datetime.stopwatch: StopWatch;
+import std.algorithm;
+import std.range;
 
 
 enum SolveFlags
@@ -77,6 +88,8 @@ public:
     {
         if (this is null || other is null)
             return false;
+        if (this is other)
+            return true;
         return _f == (cast(Node)other).f;
     }
 private:
@@ -150,7 +163,7 @@ private:
 Array!Node getSuccessors(Node current, Node start, Node end, uint flags)
 {
     Array!Node successors;
-    auto push = function(ref Array!Node a, Node n) => a.insertBack(n);
+    static auto push = function(ref Array!Node a, Node n) => a.insertBack(n);
     bool breakTies = (flags & SolveFlags.TIE_BREAKER) == 0;
     if (flags & SolveFlags.HORIZONTAL)
     {
@@ -175,11 +188,15 @@ Array!Node Astar(Node start, Node end, int width, int height,
 {
     BinaryHeap!(Node[]) open = BinaryHeap!(Node[])([]);
     Array!Node closed;
+    StopWatch lt;
     try { open.insert(start); }
-    catch (AssertError ex) { writeln("[error] ", ex.msg, ". Could not insert starting point."); }
+    catch (AssertError ex)
+    { writeln("[error] ", ex.msg, ". Could not insert starting point."); }
     while (open.empty() == false)
     {
+        lt.start();
         Node q = getBestNode(open, closed);
+        //get potential nodes
         Array!Node successors = getSuccessors(q, end, start, flags);
         foreach(n; successors)
         {
@@ -195,15 +212,58 @@ Array!Node Astar(Node start, Node end, int width, int height,
                 } while (tmp.parent !is null);
                 return path;
             }
-            else if (n.x >= 0 && n.x <= width && n.y >= 0 && n.y <= height)
+            else if (n.x >= 0 && n.x <= width && n.y >= 0 && n.y <= height && closed.exists(n) == false)
             {
                 //TODO: store modification. Replace nodes with same x & y values but lower f values
+                //if (closed.exists(n) == false)
                 open.insert(n);
             }
         }
         closed.insertBack(q);
+        lt.stop();
+        lt.reset();
     }
     return Array!Node();
+}
+
+//NodeStack is a stack implementation allowing for quick retrieval of Nodes, with the only cost associtated being insertion
+class NodeStack
+{
+public:
+    this()
+    {
+        
+    }
+    void insert(Node n)
+    {
+        auto loc = this.lookup(n);
+        if (loc == this.stack.length)
+            this.stack ~= n;
+        else
+        {
+            this.stack = this.stack[0..loc] ~ n ~ this.stack[loc..$-1];
+        }
+    }
+    override string toString()
+    {
+        string ret;
+        foreach (n; this.stack)
+            ret ~= n.toString ~ '\n';
+        return ret;
+    }
+private:
+    uint lookup(Node n)
+    {
+        int index = 0;
+        Node look = this.stack;
+        do
+        {
+            look = this.stack[index];
+            index += 1;
+        } while (n < look && index != 1);
+        return index;
+    }
+    Node[] stack;
 }
 
 int main(string[] args)
@@ -227,5 +287,13 @@ int main(string[] args)
     writeln(field);
     writeln("solved maze in ", sw.peek.total!"msecs", "ms");
     
+    writeln("Node stack testing");
+    NodeStack stack = new NodeStack();
+    stack.insert(new Node(0, 0, 0.0, 0.0, 0.0));
+    stack.insert(new Node(1, 1, 0.0, 0.0, 1.0));
+    stack.insert(new Node(2, 2, 0.0, 0.0, 2.0));
+
+    writeln(stack);
+
     return 0;
 }
