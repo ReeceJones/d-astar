@@ -1,15 +1,10 @@
-import std.file;
-import std.stdio;
-import core.thread;
-import std.container.array;
-import std.math;
-import std.container.binaryheap;
-import std.format;
-import std.parallelism;
-import core.exception;
+import std.stdio: writeln;
+import std.container.array: Array;
+import std.math: sqrt, abs, pow;
+import std.container.binaryheap: BinaryHeap;
+import std.format: format;
 import std.datetime.stopwatch: StopWatch;
-import std.algorithm;
-import std.range;
+import std.conv: to;
 
 
 enum SolveFlags
@@ -119,6 +114,22 @@ Node getBestNode(ref NodeStack stack, Array!Node closed)
     return bestNode;
 }
 
+Node getBestNode(ref BinaryHeap!(Node[]) heap, Array!Node closed)
+{
+    bool valid = false;
+    Node bestNode;
+    do
+    {
+        bestNode = heap.front();
+        if (closed.exists(bestNode) == false)
+            valid = true;
+        else
+            heap.popFront();
+    } while (valid == false);
+    heap.popFront();
+    return bestNode;
+}
+
 class Field
 {
 public:
@@ -161,7 +172,7 @@ Array!Node getSuccessors(Node current, Node start, Node end, uint flags)
 {
     Array!Node successors;
     static auto push = function(ref Array!Node a, Node n) => a.insertBack(n);
-    bool breakTies = (flags & SolveFlags.TIE_BREAKER) == 0;
+    bool breakTies = !(flags & SolveFlags.TIE_BREAKER) == 0;
     if (flags & SolveFlags.HORIZONTAL)
     {
         push(successors, new Node(current.x + 1, current.y, current, end, start, breakTies));
@@ -295,12 +306,39 @@ private:
 
 int main(string[] args)
 {
-    immutable int SIZE = 100;
+    if (args.length <= 1)
+    {
+        writeln("please enter test size");
+        return 1;
+    }
+    uint uflag = 0;
+    if (args.length == 2)
+        uflag = SolveFlags.HORIZONTAL | SolveFlags.TIE_BREAKER | SolveFlags.DIAGONAL;
+    else
+    {
+        foreach (arg; args[2..$])
+        {
+            switch (arg)
+            {
+            default: break;
+            case "--break-ties":
+                uflag |= SolveFlags.TIE_BREAKER;
+            break;
+            case "--diagonal":
+                uflag |= SolveFlags.DIAGONAL;
+            break;
+            case "--horizontal":
+                uflag |= SolveFlags.HORIZONTAL;
+            break;
+            }
+        }
+    }
+    const int SIZE = to!int(args[1]);
     Node start = new Node(0, 0, 0.0, 0.0, 0.0);
     Node end = new Node(SIZE - 1, SIZE - 1, 0.0, 0.0, 0.0);
     StopWatch sw;
     sw.start();
-    auto fastestPath = Astar(start, end, SIZE, SIZE, SolveFlags.HORIZONTAL);
+    auto fastestPath = Astar(start, end, SIZE, SIZE, uflag);
     sw.stop();
     writeln('\n');
     Field field = new Field(SIZE, SIZE, '.');
