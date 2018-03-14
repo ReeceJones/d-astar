@@ -30,7 +30,7 @@ double heuristic(Node current, Node start, Node end, bool breakTies)
         int dx2 = start.x - end.x;
         int dy2 = start.y - end.y;
         double cross = abs(dx1*dy2 - dx2*dy1);
-        return result + (cross*0.001);
+        return result + (cross*0.01);
     }
     else return result;
 }
@@ -342,7 +342,12 @@ int main(string[] args)
             break;
             case "--help":
                 writeln("commands: ");
-                writeln("\t--help");
+                writeln("\t--help: list of commands");
+                writeln("\t--diagonal: move diagonally");
+                writeln("\t--horizontal: move up, down, left, and right");
+                writeln("\t--break-ties: use a tie-breaker");
+                writeln("\t--size <n>: create a maze of n width and n height and solve it");
+                writeln("\t--file <f>: read maze from file and solve it. Whitespace must be used in the paths, and start must be marked by @ character, and end marked by X character");
                 return 1;
             break;
             case "--diagonal":
