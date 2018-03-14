@@ -1,10 +1,11 @@
-import std.stdio: writeln;
+import std.stdio: writeln, File;
 import std.container.array: Array;
 import std.math: sqrt, abs, pow;
 import std.container.binaryheap: BinaryHeap;
 import std.format: format;
 import std.datetime.stopwatch: StopWatch;
 import std.conv: to;
+import std.file;
 
 
 enum SolveFlags
@@ -93,7 +94,7 @@ private:
     Node _parent;
 }
 
-bool exists(Array!Node nodes, Node n)
+bool nodeExists(Array!Node nodes, Node n)
 {
     foreach (tmp; nodes)
         if (n.x == tmp.x && n.y == tmp.y)
@@ -108,7 +109,7 @@ Node getBestNode(ref NodeStack stack, Array!Node closed)
     do
     {
         bestNode = stack.popFront();
-        if (closed.exists(bestNode) == false)
+        if (closed.nodeExists(bestNode) == false)
             valid = true;
     } while (valid == false);
     return bestNode;
@@ -121,7 +122,7 @@ Node getBestNode(ref BinaryHeap!(Node[]) heap, Array!Node closed)
     do
     {
         bestNode = heap.front();
-        if (closed.exists(bestNode) == false)
+        if (closed.nodeExists(bestNode) == false)
             valid = true;
         else
             heap.popFront();
@@ -133,7 +134,7 @@ Node getBestNode(ref BinaryHeap!(Node[]) heap, Array!Node closed)
 class Field
 {
 public:
-    this(int width, int height, char whitespace)
+    this(int width, int height, char whitespace, char movable)
     {
         this.width = width;
         this.height = height;
@@ -146,6 +147,7 @@ public:
             }
             this.field ~= push;
         }
+        this.mov = movable;
     }
     override string toString()
     {
@@ -161,6 +163,23 @@ public:
     void replace(Node n, char x)
     {
         this.field[n.y][n.x] = x;
+    }
+    void pushln(string ln)
+    {
+        char[] build;
+        foreach (c; ln)
+            build ~= c;
+        this.field ~= build;
+    }
+    void reset()
+    {
+        this.field = [][];
+    }
+    bool movable(Node n)
+    {
+        if (n.x >= 0 && n.x < this.field[0].length && n.y >= 0 && n.y < this.field.length)
+            return this.field[n.y][n.x] == mov;
+        return false;
     }
 private:
     int width, height;
@@ -191,7 +210,7 @@ Array!Node getSuccessors(Node current, Node start, Node end, uint flags)
     return successors;
 }
 
-Array!Node Astar(Node start, Node end, int width, int height,
+Array!Node Astar(Node start, Node end, int width, int height, ref Field field,
                  uint flags = SolveFlags.HORIZONTAL | SolveFlags.DIAGONAL | SolveFlags.TIE_BREAKER)
 {
     //BinaryHeap!(Node[]) open = BinaryHeap!(Node[])([]);
@@ -217,7 +236,9 @@ Array!Node Astar(Node start, Node end, int width, int height,
                 } while (tmp.parent !is null);
                 return path;
             }
-            else if (n.x >= 0 && n.x <= width && n.y >= 0 && n.y <= height && closed.exists(n) == false)
+            else if (n.x >= 0 && n.x <= width && n.y >= 0 && n.y <= height
+                     && closed.nodeExists(n) == false
+                     && field.movable(n) == true)
             {
                 //TODO: store modification. Replace nodes with same x & y values but lower f values
                 //if (closed.exists(n) == false)
@@ -304,21 +325,25 @@ int main(string[] args)
 {
     if (args.length <= 1)
     {
-        writeln("please enter test size");
+        writeln("[error] no parameters provided");
         return 1;
     }
     uint uflag = 0;
-    if (args.length == 2)
-        uflag = SolveFlags.HORIZONTAL | SolveFlags.TIE_BREAKER | SolveFlags.DIAGONAL;
-    else
+    uint mode = -1;
+    int SIZE;
+    string file;
+    for (uint i = 1; i < args.length; i++)
     {
-        foreach (arg; args[2..$])
+        switch (args[i])
         {
-            switch (arg)
-            {
-            default: break;
-            case "--break-ties":
-                uflag |= SolveFlags.TIE_BREAKER;
+            default:
+                writeln("[error] \'", args[i], "\' unrecognized");
+                return 1;
+            break;
+            case "--help":
+                writeln("commands: ");
+                writeln("\t--help");
+                return 1;
             break;
             case "--diagonal":
                 uflag |= SolveFlags.DIAGONAL;
@@ -326,52 +351,109 @@ int main(string[] args)
             case "--horizontal":
                 uflag |= SolveFlags.HORIZONTAL;
             break;
-            }
+            case "--break-ties":
+                uflag |= SolveFlags.TIE_BREAKER;
+            break;
+            case "--size":
+                SIZE = to!int(args[i + 1]);
+                //skip the next argument
+                i += 1;
+                mode = 0;
+            break;
+            case "--file":
+                file = args[i + 1];
+                if (exists(file) == false)
+                {
+                    writeln("[error] file does not exist");
+                    return 1;
+                }
+                i += 1;
+                mode = 1;
+            break;
         }
     }
-    const int SIZE = to!int(args[1]);
-    if (SIZE <= 1)
+    if (mode == cast(uint)-1)
+    {
+        writeln("[error] no solve mode provided");
+        return 1;
+    }
+    if (SIZE <= 1 && mode == 0)
     {
         writeln("[error] invalid range");
         return 1;
     }
-    Node start = new Node(0, 0, 0.0, 0.0, 0.0);
-    Node end = new Node(SIZE - 1, SIZE - 1, 0.0, 0.0, 0.0);
+    Field field = new Field(SIZE, SIZE, ' ', ' ');
+    int width = 0, height = 0;
+    Node start, end;
+    if (mode == 1)
+    {
+        field.reset();
+        File* maze = new File(file, "r");
+        string push;
+        while ((push = maze.readln()) !is null)
+        {
+            field.pushln(push[0..$ - 1]);
+            if (push.length - 1 > width)
+                width = cast(int)push.length - 1;
+            foreach (i; 0..push.length - 1)
+            {
+                char c = push[i];
+                if (c == '@')
+                {
+                    start = new Node(cast(int)i, height, 0.0, 0.0, 0.0);
+                }
+                else if (c == 'X')
+                {
+                    end = new Node(cast(int)i, height, 0.0, 0.0, 0.0);
+                }
+            }
+            height++;  
+        }
+    }
+    else
+    {
+        start = new Node(0, 0, 0.0, 0.0, 0.0);
+        end = new Node(SIZE - 1, SIZE - 1, 0.0, 0.0, 0.0);
+    }
+    writeln(start);
+    writeln(end);
     StopWatch sw;
     sw.start();
-    auto fastestPath = Astar(start, end, SIZE, SIZE, uflag);
+    auto fastestPath = Astar(start, end, width, height, field, uflag);
     sw.stop();
     writeln('\n');
-    Field field = new Field(SIZE, SIZE, '.');
-    foreach(n; fastestPath)
+    foreach(n; fastestPath[1..$-1])
     {
-       writeln(n);
-       field.replace(n, 'X');
+       //writeln(n);
+       field.replace(n, '*');
     }
     
     writeln();
     writeln(field);
     writeln("solved maze in ", sw.peek.total!"msecs", "ms");
     
-    writeln("Node stack testing");
-    NodeStack stack = new NodeStack();
-    stack.insert(new Node(5, 2, 0.0, 0.0, 5.0));
-    stack.insert(new Node(0, 0, 0.0, 0.0, 0.0));
-    stack.insert(new Node(1, 1, 0.0, 0.0, 1.0));
-    stack.insert(new Node(2, 2, 0.0, 0.0, 2.0));
-    stack.insert(new Node(3, 2, 0.0, 0.0, 3.0));
-    stack.insert(new Node(4, 2, 0.0, 0.0, 4.0));
+    version (stacktest)
+    {
+        writeln("Node stack testing");
+        NodeStack stack = new NodeStack();
+        stack.insert(new Node(5, 2, 0.0, 0.0, 5.0));
+        stack.insert(new Node(0, 0, 0.0, 0.0, 0.0));
+        stack.insert(new Node(1, 1, 0.0, 0.0, 1.0));
+        stack.insert(new Node(2, 2, 0.0, 0.0, 2.0));
+        stack.insert(new Node(3, 2, 0.0, 0.0, 3.0));
+        stack.insert(new Node(4, 2, 0.0, 0.0, 4.0));
 
-    writeln(stack);
-    writeln(stack.take(3, 0));
-    stack.popFront();
-    stack.popFront();
-    stack.pop(2);
-    writeln(stack);
-    stack.insert([new Node(0, 0, 0.0, 0.0, 0.0),
-                    new Node(1, 1, 0.0, 0.0, 1.0),
-                    new Node(4, 2, 0.0, 0.0, 4.0)]);
-    writeln(stack);
+        writeln(stack);
+        writeln(stack.take(3, 0));
+        stack.popFront();
+        stack.popFront();
+        stack.pop(2);
+        writeln(stack);
+        stack.insert([new Node(0, 0, 0.0, 0.0, 0.0),
+                        new Node(1, 1, 0.0, 0.0, 1.0),
+                        new Node(4, 2, 0.0, 0.0, 4.0)]);
+        writeln(stack);
+    }
 
     return 0;
 }
