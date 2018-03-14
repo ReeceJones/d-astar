@@ -106,19 +106,16 @@ bool exists(Array!Node nodes, Node n)
     return false;
 }
 
-Node getBestNode(ref BinaryHeap!(Node[]) heap, Array!Node closed)
+Node getBestNode(ref NodeStack stack, Array!Node closed)
 {
     bool valid = false;
     Node bestNode;
     do
     {
-        bestNode = heap.front();
-        if (closed.exists(bestNode) == true)
-            heap.popFront();
-        else
+        bestNode = stack.popFront();
+        if (closed.exists(bestNode) == false)
             valid = true;
     } while (valid == false);
-    heap.popFront();
     return bestNode;
 }
 
@@ -186,13 +183,12 @@ Array!Node getSuccessors(Node current, Node start, Node end, uint flags)
 Array!Node Astar(Node start, Node end, int width, int height,
                  uint flags = SolveFlags.HORIZONTAL | SolveFlags.DIAGONAL | SolveFlags.TIE_BREAKER)
 {
-    BinaryHeap!(Node[]) open = BinaryHeap!(Node[])([]);
+    //BinaryHeap!(Node[]) open = BinaryHeap!(Node[])([]);
+    NodeStack open = new NodeStack();
     Array!Node closed;
     StopWatch lt;
-    try { open.insert(start); }
-    catch (AssertError ex)
-    { writeln("[error] ", ex.msg, ". Could not insert starting point."); }
-    while (open.empty() == false)
+    open.insert(start);
+    while (open.length != 0)
     {
         lt.start();
         Node q = getBestNode(open, closed);
@@ -227,6 +223,7 @@ Array!Node Astar(Node start, Node end, int width, int height,
 }
 
 //NodeStack is a stack implementation allowing for quick retrieval of Nodes, with the only cost associtated being insertion
+//this doesn't seem to reduce solve time a lot :(
 class NodeStack
 {
 public:
@@ -234,15 +231,56 @@ public:
     {
         
     }
+    /*
+        the downside of this stack method is there is a O(length) worst case complexity for insertion...ouch
+        but there is a really quick time to get the front node
+    */
     void insert(Node n)
     {
-        auto loc = this.lookup(n);
-        if (loc == this.stack.length)
+        if (this.stack.length == 0)
             this.stack ~= n;
         else
         {
-            this.stack = this.stack[0..loc] ~ n ~ this.stack[loc..$-1];
+            uint index = 0;
+            Node lookup = this.stack[index];
+            while (n < lookup)
+            {
+                index++;
+                if (index == this.stack.length)
+                    break;
+                lookup = this.stack[index];
+            }
+            if (index == this.stack.length)
+                this.stack ~= n;
+            else
+                this.stack = this.stack[0..index] ~ n ~ this.stack[index..$];
         }
+    }
+    void insert(Node[] inserts)
+    {
+        foreach (n; inserts)
+         this.insert(n);
+    }
+    Node pop(uint index)
+    {
+        Node ret = this.stack[index];
+        this.stack = this.stack[0..index] ~ this.stack[index + 1..$];
+        return ret;
+    }
+    Node popFront()
+    {
+        return this.pop(0);
+    }
+    Node[] take(uint num, uint index)
+    {
+        Node[] ret;
+        foreach(n; this.stack[index..index + num])
+            ret ~= n;
+        return ret;
+    }
+    ulong length()
+    {
+        return this.stack.length;
     }
     override string toString()
     {
@@ -252,23 +290,12 @@ public:
         return ret;
     }
 private:
-    uint lookup(Node n)
-    {
-        int index = 0;
-        Node look = this.stack;
-        do
-        {
-            look = this.stack[index];
-            index += 1;
-        } while (n < look && index != 1);
-        return index;
-    }
     Node[] stack;
 }
 
 int main(string[] args)
 {
-    immutable int SIZE = 50;
+    immutable int SIZE = 100;
     Node start = new Node(0, 0, 0.0, 0.0, 0.0);
     Node end = new Node(SIZE - 1, SIZE - 1, 0.0, 0.0, 0.0);
     StopWatch sw;
@@ -289,10 +316,22 @@ int main(string[] args)
     
     writeln("Node stack testing");
     NodeStack stack = new NodeStack();
+    stack.insert(new Node(5, 2, 0.0, 0.0, 5.0));
     stack.insert(new Node(0, 0, 0.0, 0.0, 0.0));
     stack.insert(new Node(1, 1, 0.0, 0.0, 1.0));
     stack.insert(new Node(2, 2, 0.0, 0.0, 2.0));
+    stack.insert(new Node(3, 2, 0.0, 0.0, 3.0));
+    stack.insert(new Node(4, 2, 0.0, 0.0, 4.0));
 
+    writeln(stack);
+    writeln(stack.take(3, 0));
+    stack.popFront();
+    stack.popFront();
+    stack.pop(2);
+    writeln(stack);
+    stack.insert([new Node(0, 0, 0.0, 0.0, 0.0),
+                    new Node(1, 1, 0.0, 0.0, 1.0),
+                    new Node(4, 2, 0.0, 0.0, 4.0)]);
     writeln(stack);
 
     return 0;
