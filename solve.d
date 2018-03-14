@@ -414,6 +414,8 @@ int main(string[] args)
     {
         start = new Node(0, 0, 0.0, 0.0, 0.0);
         end = new Node(SIZE - 1, SIZE - 1, 0.0, 0.0, 0.0);
+        width = SIZE;
+        height = SIZE;
     }
     writeln(start);
     writeln(end);
