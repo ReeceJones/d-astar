@@ -197,11 +197,9 @@ Array!Node Astar(Node start, Node end, int width, int height,
     //BinaryHeap!(Node[]) open = BinaryHeap!(Node[])([]);
     NodeStack open = new NodeStack();
     Array!Node closed;
-    StopWatch lt;
     open.insert(start);
     while (open.length != 0)
     {
-        lt.start();
         Node q = getBestNode(open, closed);
         //get potential nodes
         Array!Node successors = getSuccessors(q, end, start, flags);
@@ -227,8 +225,6 @@ Array!Node Astar(Node start, Node end, int width, int height,
             }
         }
         closed.insertBack(q);
-        lt.stop();
-        lt.reset();
     }
     return Array!Node();
 }
@@ -334,6 +330,11 @@ int main(string[] args)
         }
     }
     const int SIZE = to!int(args[1]);
+    if (SIZE <= 1)
+    {
+        writeln("[error] invalid range");
+        return 1;
+    }
     Node start = new Node(0, 0, 0.0, 0.0, 0.0);
     Node end = new Node(SIZE - 1, SIZE - 1, 0.0, 0.0, 0.0);
     StopWatch sw;
