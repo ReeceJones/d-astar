@@ -102,7 +102,7 @@ bool nodeExists(Array!Node nodes, Node n)
     return false;
 }
 
-Node getBestNode(ref NodeStack stack, Array!Node closed)
+Node getBestNode(ref NodeStack stack, ref NodeSet closed)
 {
     bool valid = false;
     Node bestNode;
@@ -115,7 +115,7 @@ Node getBestNode(ref NodeStack stack, Array!Node closed)
     return bestNode;
 }
 
-Node getBestNode(ref BinaryHeap!(Node[]) heap, Array!Node closed)
+Node getBestNode(ref BinaryHeap!(Node[]) heap, ref NodeSet closed)
 {
     bool valid = false;
     Node bestNode;
@@ -210,12 +210,12 @@ Array!Node getSuccessors(Node current, Node start, Node end, uint flags)
     return successors;
 }
 
-Array!Node Astar(Node start, Node end, int width, int height, ref Field field,
+Array!Node Astar(Node start, Node end, int width, int height, ref Field field, uint expected,
                  uint flags = SolveFlags.HORIZONTAL | SolveFlags.DIAGONAL | SolveFlags.TIE_BREAKER)
 {
     //BinaryHeap!(Node[]) open = BinaryHeap!(Node[])([]);
     NodeStack open = new NodeStack();
-    Array!Node closed;
+    NodeSet closed = new NodeSet();
     open.insert(start);
     while (open.length != 0)
     {
@@ -234,10 +234,15 @@ Array!Node Astar(Node start, Node end, int width, int height, ref Field field,
                     tmp = tmp.parent;
                     path.insertBack(tmp);
                 } while (tmp.parent !is null);
+                writeln("closed length: ", closed.length);
+                writeln("insert count: ", closed.insertCount);
+                writeln("failed insert count: ", closed.errorCount);
+                writeln("open length: ", open.length);
+                writeln("explored vs nodes ratio: ", cast(double)closed.length / cast(double)expected);
                 return path;
             }
             else if (n.x >= 0 && n.x <= width && n.y >= 0 && n.y <= height
-                     && closed.nodeExists(n) == false
+                     //&& closed.nodeExists(n) == false //using this adds ~18% more time
                      && field.movable(n) == true)
             {
                 //TODO: store modification. Replace nodes with same x & y values but lower f values
@@ -245,7 +250,12 @@ Array!Node Astar(Node start, Node end, int width, int height, ref Field field,
                 open.insert(n);
             }
         }
-        closed.insertBack(q);
+        closed.insert(q);
+        if (closed.length == expected)
+        {
+            //return an empty array if we cannot find a path
+            return Array!Node();
+        }
     }
     return Array!Node();
 }
@@ -321,6 +331,73 @@ private:
     Node[] stack;
 }
 
+//if i'm bored in the future, I will update this to use trees as the underlying structure
+//but for now i'm not motivated enough to figure out how to make a multidimensional tree structure
+//when i can barely make a tree by myself
+class NodeSet
+{
+public:
+    this()
+    {
+        //blah blah blah
+        this.cnt = 0;
+        this.errcnt = 0;
+    }
+    //returns true if a new node was inserted or replaced another node
+    //returns false if a node already exists and the inserting node's f-value is greater than or equal
+    //to the node already in the list
+    bool insert(Node n)
+    {
+        if (this.set.length == 0)
+        {
+            //this node and no parent
+            this.set ~= n;
+        this.cnt++;
+            return true;
+        }
+        foreach (c; this.set)
+        {
+            if (n.x == c.x && n.y == c.y && n.f < c.f)
+            {
+                c = n;
+            this.cnt++;
+                return true;
+            }
+            else if (n.x == c.x && n.y == c.y)
+            {
+                this.errcnt++;
+                return false;
+            }
+        }
+        this.cnt++;
+        this.set ~= n;
+        return true;
+    }
+    ulong length()
+    {
+        return this.set.length;
+    }
+    bool nodeExists(Node n)
+    {
+        foreach (c; this.set)
+            if (n.x == c.x && n.y == c.y)
+                return true;
+        return false;
+    }
+    uint insertCount()
+    {
+        return this.cnt;
+    }
+    uint errorCount()
+    {
+        return this.errcnt;
+    }
+private:
+    uint cnt;
+    uint errcnt;
+    Node[] set;
+}
+
 int main(string[] args)
 {
     if (args.length <= 1)
@@ -388,7 +465,7 @@ int main(string[] args)
         return 1;
     }
     Field field = new Field(SIZE, SIZE, ' ', ' ');
-    int width = 0, height = 0;
+    int width = 0, height = 0, exp = 0;
     Node start, end;
     if (mode == 1)
     {
@@ -411,6 +488,10 @@ int main(string[] args)
                 {
                     end = new Node(cast(int)i, height, 0.0, 0.0, 0.0);
                 }
+                else if (c == ' ')
+                {
+                    exp++;
+                }
             }
             height++;  
         }
@@ -421,13 +502,19 @@ int main(string[] args)
         end = new Node(SIZE - 1, SIZE - 1, 0.0, 0.0, 0.0);
         width = SIZE;
         height = SIZE;
+        exp = pow(SIZE, 2);
     }
     writeln(start);
     writeln(end);
     StopWatch sw;
     sw.start();
-    auto fastestPath = Astar(start, end, width, height, field, uflag);
+    auto fastestPath = Astar(start, end, width, height, field, exp, uflag);
     sw.stop();
+    if (fastestPath.length == 0)
+    {
+        writeln("[error] no solution");
+        return 1;
+    }
     writeln('\n');
     foreach(n; fastestPath[1..$-1])
     {
