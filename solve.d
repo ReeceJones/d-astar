@@ -4,10 +4,11 @@ import std.math: sqrt, abs, pow;
 import std.container.binaryheap: BinaryHeap;
 import std.format: format;
 import std.datetime.stopwatch: StopWatch;
-import std.conv: to;
-import std.file;
+import std.conv: to, ConvException;
+import std.file: exists;
 
-
+bool showClosed = false;
+uint uh = 0;
 enum SolveFlags
 {
     NONE = 0,
@@ -20,7 +21,19 @@ double heuristic(Node current, Node start, Node end, bool breakTies)
 {
     //we'll just use euclidean
     
-    double result = abs(sqrt(cast(float)pow(current.x - end.x, 2) + cast(float)pow(current.y - end.y, 2)));
+    //double result = abs(sqrt(cast(float)pow(current.x - end.x, 2) + cast(float)pow(current.y - end.y, 2)));
+    //double result = abs(cast(float)(current.x - end.x)) + abs(cast(float)(current.y - end.y));
+    double result;
+    switch (uh)
+    {
+        default:
+        case 1:
+            result = abs(cast(float)(current.x - end.x)) + abs(cast(float)(current.y - end.y));
+        break;
+        case 2:
+            result = abs(sqrt(cast(float)pow(current.x - end.x, 2) + cast(float)pow(current.y - end.y, 2)));
+        break;
+    }
     if (breakTies == true)
     {
         //tie-breaker
@@ -234,6 +247,9 @@ Array!Node Astar(Node start, Node end, int width, int height, ref Field field, u
                     tmp = tmp.parent;
                     path.insertBack(tmp);
                 } while (tmp.parent !is null);
+                if (showClosed == true)
+                    foreach (z; closed)
+                        field.replace(z, 'o');
                 writeln("closed length: ", closed.length);
                 writeln("insert count: ", closed.insertCount);
                 writeln("failed insert count: ", closed.errorCount);
@@ -392,9 +408,49 @@ public:
     {
         return this.errcnt;
     }
+    /*
+        empty (first iteration only)
+        front
+        <body>
+        popFront
+        empty
+    */
+    @property bool empty()
+    {
+        if (this.frontCheck == false)
+        {
+            this.index = 0;
+            this.hasNode = false;
+        }
+        if (this.hasNode == true)
+            return false;
+        this.n = this.set[this.index++];
+        if (this.index == this.length)
+        {
+            this.index = 0;
+            return true;
+        }
+        this.hasNode = true;
+        return false;
+    }
+    @property Node front()
+    {
+        this.frontCheck = false;
+        return n;
+    }
+    void popFront()
+    {
+        this.frontCheck = true;
+        this.hasNode = false;
+    }
 private:
     uint cnt;
     uint errcnt;
+
+    Node n;
+    uint index;
+    bool hasNode, frontCheck;
+
     Node[] set;
 }
 
@@ -425,6 +481,9 @@ int main(string[] args)
                 writeln("\t--break-ties: use a tie-breaker");
                 writeln("\t--size <n>: create a maze of n width and n height and solve it");
                 writeln("\t--file <f>: read maze from file and solve it. Whitespace must be used in the paths, and start must be marked by @ character, and end marked by X character");
+                writeln("\t--show-closed: shows the closed set of nodes, represented by \'o\'");
+                writeln("\t--manhattan: used manhattan distance for heuristic");
+                writeln("\t--euclidean: used euclidean distance for heuristic");
                 return 1;
             break;
             case "--diagonal":
@@ -437,7 +496,15 @@ int main(string[] args)
                 uflag |= SolveFlags.TIE_BREAKER;
             break;
             case "--size":
-                SIZE = to!int(args[i + 1]);
+                try
+                {
+                    SIZE = to!int(args[i + 1]);
+                }
+                catch (ConvException)
+                {
+                    writeln("[error] \'", args[i + 1], "\' is not a number");
+                    return 1;
+                }
                 //skip the next argument
                 i += 1;
                 mode = 0;
@@ -451,6 +518,16 @@ int main(string[] args)
                 }
                 i += 1;
                 mode = 1;
+            break;
+            case "--show-closed":
+                showClosed = true;
+            break;
+            case "--manhattan":
+            //yes i know this is pointless
+                uh = 1;
+            break;
+            case "--euclidean":
+                uh = 2;
             break;
         }
     }
@@ -547,6 +624,40 @@ int main(string[] args)
                         new Node(1, 1, 0.0, 0.0, 1.0),
                         new Node(4, 2, 0.0, 0.0, 4.0)]);
         writeln(stack);
+    }
+    version (settest)
+    {
+        writeln("Node set testing");
+        NodeSet set = new NodeSet();
+        set.insert(new Node(5, 2, 0.0, 0.0, 5.0));
+        set.insert(new Node(0, 0, 0.0, 0.0, 0.0));
+        set.insert(new Node(1, 1, 0.0, 0.0, 1.0));
+        set.insert(new Node(2, 2, 0.0, 0.0, 2.0));
+        set.insert(new Node(3, 2, 0.0, 0.0, 3.0));
+        set.insert(new Node(4, 2, 0.0, 0.0, 4.0));
+        set.insert(new Node(5, 2, 0.0, 0.0, 5.0));
+        uint cnt = 0;
+        foreach(n; set)
+        {
+            writeln("Node: ", n, " -- count: ", cnt++);
+        }
+        cnt = 0;
+        writeln("a second time");
+        foreach(n; set)
+        {
+            writeln("Node: ", n, " -- count: ", cnt++);
+            if (cnt == 3)
+            {
+                writeln("breaking loop...");
+                break;
+            }
+        }
+        cnt = 0;
+        writeln("a third time");
+        foreach(n; set)
+        {
+            writeln("Node: ", n, " -- count: ", cnt++);
+        }
     }
 
     return 0;
