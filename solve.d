@@ -7,8 +7,9 @@ import std.datetime.stopwatch: StopWatch;
 import std.conv: to, ConvException;
 import std.file: exists;
 
-bool showClosed = false;
+bool showClosed = false, showOpen = false;
 uint uh = 0;
+
 enum SolveFlags
 {
     NONE = 0,
@@ -121,7 +122,7 @@ Node getBestNode(ref NodeStack stack, ref NodeSet closed)
     Node bestNode;
     do
     {
-        bestNode = stack.popFront();
+        bestNode = stack.pop();
         if (closed.nodeExists(bestNode) == false)
             valid = true;
     } while (valid == false);
@@ -250,6 +251,9 @@ Array!Node Astar(Node start, Node end, int width, int height, ref Field field, u
                 if (showClosed == true)
                     foreach (z; closed)
                         field.replace(z, 'o');
+                if (showOpen == true)
+                    foreach(z; open)
+                        field.replace(z, 'x');
                 writeln("closed length: ", closed.length);
                 writeln("insert count: ", closed.insertCount);
                 writeln("failed insert count: ", closed.errorCount);
@@ -321,7 +325,7 @@ public:
         this.stack = this.stack[0..index] ~ this.stack[index + 1..$];
         return ret;
     }
-    Node popFront()
+    Node pop()
     {
         return this.pop(0);
     }
@@ -343,8 +347,49 @@ public:
             ret ~= n.toString ~ '\n';
         return ret;
     }
+
+        /*
+        empty (first iteration only)
+        front
+        <body>
+        popFront
+        empty
+    */
+    @property bool empty()
+    {
+        if (this.frontCheck == false)
+        {
+            this.index = 0;
+            this.hasNode = false;
+        }
+        if (this.hasNode == true)
+            return false;
+        this.n = this.stack[this.index++];
+        if (this.index == this.length)
+        {
+            this.index = 0;
+            return true;
+        }
+        this.hasNode = true;
+        return false;
+    }
+    @property Node front()
+    {
+        this.frontCheck = false;
+        return n;
+    }
+    void popFront()
+    {
+        this.frontCheck = true;
+        this.hasNode = false;
+    }
+
 private:
     Node[] stack;
+
+    Node n;
+    uint index;
+    bool hasNode, frontCheck;
 }
 
 //if i'm bored in the future, I will update this to use trees as the underlying structure
@@ -482,6 +527,7 @@ int main(string[] args)
                 writeln("\t--size <n>: create a maze of n width and n height and solve it");
                 writeln("\t--file <f>: read maze from file and solve it. Whitespace must be used in the paths, and start must be marked by @ character, and end marked by X character");
                 writeln("\t--show-closed: shows the closed set of nodes, represented by \'o\'");
+                writeln("\t--show-open: shows the open set of nodes, represented by \'x\'");
                 writeln("\t--manhattan: used manhattan distance for heuristic");
                 writeln("\t--euclidean: used euclidean distance for heuristic");
                 return 1;
@@ -521,6 +567,9 @@ int main(string[] args)
             break;
             case "--show-closed":
                 showClosed = true;
+            break;
+            case "--show-open":
+                showOpen = true;
             break;
             case "--manhattan":
             //yes i know this is pointless
@@ -616,8 +665,8 @@ int main(string[] args)
 
         writeln(stack);
         writeln(stack.take(3, 0));
-        stack.popFront();
-        stack.popFront();
+        stack.pop();
+        stack.pop();
         stack.pop(2);
         writeln(stack);
         stack.insert([new Node(0, 0, 0.0, 0.0, 0.0),
