@@ -28,6 +28,9 @@ double heuristic(Node current, Node start, Node end, bool breakTies)
     switch (uh)
     {
         default:
+        //dijkstra
+            result = 1;
+        break;
         case 1:
             result = abs(cast(float)(current.x - end.x)) + abs(cast(float)(current.y - end.y));
         break;
