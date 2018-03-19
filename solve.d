@@ -259,6 +259,7 @@ Array!Node Astar(Node start, Node end, int width, int height, ref Field field, u
                 writeln("failed insert count: ", closed.errorCount);
                 writeln("open length: ", open.length);
                 writeln("explored vs nodes ratio: ", cast(double)closed.length / cast(double)expected);
+                writeln("solution length: ", path.length);
                 return path;
             }
             else if (n.x >= 0 && n.x <= width && n.y >= 0 && n.y <= height
