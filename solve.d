@@ -6,6 +6,7 @@ import std.format: format;
 import std.datetime.stopwatch: StopWatch;
 import std.conv: to, ConvException;
 import std.file: exists;
+import std.parallelism: parallel;
 
 bool showClosed = false, showOpen = false;
 uint uh = 0;
@@ -252,10 +253,10 @@ Array!Node Astar(Node start, Node end, int width, int height, ref Field field, u
                     path.insertBack(tmp);
                 } while (tmp.parent !is null);
                 if (showClosed == true)
-                    foreach (z; closed)
+                    foreach (z; closed.parallel)
                         field.replace(z, 'o');
                 if (showOpen == true)
-                    foreach(z; open)
+                    foreach(z; open.parallel)
                         field.replace(z, 'x');
                 writeln("closed length: ", closed.length);
                 writeln("insert count: ", closed.insertCount);
@@ -321,7 +322,7 @@ public:
     void insert(Node[] inserts)
     {
         foreach (n; inserts)
-         this.insert(n);
+            this.insert(n);
     }
     Node pop(uint index)
     {
@@ -646,7 +647,7 @@ int main(string[] args)
         return 1;
     }
     writeln('\n');
-    foreach(n; fastestPath[1..$-1])
+    foreach(n; fastestPath[1..$-1].parallel)
     {
        //writeln(n);
        field.replace(n, '*');
