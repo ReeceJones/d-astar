@@ -506,6 +506,62 @@ private:
 
 int main(string[] args)
 {
+        version (stacktest)
+    {
+        writeln("Node stack testing");
+        NodeStack stack = new NodeStack();
+        stack.insert(new Node(5, 2, 0.0, 0.0, 5.0));
+        stack.insert(new Node(0, 0, 0.0, 0.0, 0.0));
+        stack.insert(new Node(1, 1, 0.0, 0.0, 1.0));
+        stack.insert(new Node(2, 2, 0.0, 0.0, 2.0));
+        stack.insert(new Node(3, 2, 0.0, 0.0, 3.0));
+        stack.insert(new Node(4, 2, 0.0, 0.0, 4.0));
+
+        writeln(stack);
+        writeln(stack.take(3, 0));
+        stack.pop();
+        stack.pop();
+        stack.pop(2);
+        writeln(stack);
+        stack.insert([new Node(0, 0, 0.0, 0.0, 0.0),
+                        new Node(1, 1, 0.0, 0.0, 1.0),
+                        new Node(4, 2, 0.0, 0.0, 4.0)]);
+        writeln(stack);
+    }
+    version (settest)
+    {
+        writeln("Node set testing");
+        NodeSet set = new NodeSet();
+        set.insert(new Node(5, 2, 0.0, 0.0, 5.0));
+        set.insert(new Node(0, 0, 0.0, 0.0, 0.0));
+        set.insert(new Node(1, 1, 0.0, 0.0, 1.0));
+        set.insert(new Node(2, 2, 0.0, 0.0, 2.0));
+        set.insert(new Node(3, 2, 0.0, 0.0, 3.0));
+        set.insert(new Node(4, 2, 0.0, 0.0, 4.0));
+        set.insert(new Node(5, 2, 0.0, 0.0, 5.0));
+        uint cnt = 0;
+        foreach(n; set)
+        {
+            writeln("Node: ", n, " -- count: ", cnt++);
+        }
+        cnt = 0;
+        writeln("a second time");
+        foreach(n; set)
+        {
+            writeln("Node: ", n, " -- count: ", cnt++);
+            if (cnt == 3)
+            {
+                writeln("breaking loop...");
+                break;
+            }
+        }
+        cnt = 0;
+        writeln("a third time");
+        foreach(n; set)
+        {
+            writeln("Node: ", n, " -- count: ", cnt++);
+        }
+    }
     if (args.length <= 1)
     {
         writeln("[error] no parameters provided");
@@ -656,63 +712,6 @@ int main(string[] args)
     writeln();
     writeln(field);
     writeln("solved maze in ", sw.peek.total!"msecs", "ms");
-    
-    version (stacktest)
-    {
-        writeln("Node stack testing");
-        NodeStack stack = new NodeStack();
-        stack.insert(new Node(5, 2, 0.0, 0.0, 5.0));
-        stack.insert(new Node(0, 0, 0.0, 0.0, 0.0));
-        stack.insert(new Node(1, 1, 0.0, 0.0, 1.0));
-        stack.insert(new Node(2, 2, 0.0, 0.0, 2.0));
-        stack.insert(new Node(3, 2, 0.0, 0.0, 3.0));
-        stack.insert(new Node(4, 2, 0.0, 0.0, 4.0));
-
-        writeln(stack);
-        writeln(stack.take(3, 0));
-        stack.pop();
-        stack.pop();
-        stack.pop(2);
-        writeln(stack);
-        stack.insert([new Node(0, 0, 0.0, 0.0, 0.0),
-                        new Node(1, 1, 0.0, 0.0, 1.0),
-                        new Node(4, 2, 0.0, 0.0, 4.0)]);
-        writeln(stack);
-    }
-    version (settest)
-    {
-        writeln("Node set testing");
-        NodeSet set = new NodeSet();
-        set.insert(new Node(5, 2, 0.0, 0.0, 5.0));
-        set.insert(new Node(0, 0, 0.0, 0.0, 0.0));
-        set.insert(new Node(1, 1, 0.0, 0.0, 1.0));
-        set.insert(new Node(2, 2, 0.0, 0.0, 2.0));
-        set.insert(new Node(3, 2, 0.0, 0.0, 3.0));
-        set.insert(new Node(4, 2, 0.0, 0.0, 4.0));
-        set.insert(new Node(5, 2, 0.0, 0.0, 5.0));
-        uint cnt = 0;
-        foreach(n; set)
-        {
-            writeln("Node: ", n, " -- count: ", cnt++);
-        }
-        cnt = 0;
-        writeln("a second time");
-        foreach(n; set)
-        {
-            writeln("Node: ", n, " -- count: ", cnt++);
-            if (cnt == 3)
-            {
-                writeln("breaking loop...");
-                break;
-            }
-        }
-        cnt = 0;
-        writeln("a third time");
-        foreach(n; set)
-        {
-            writeln("Node: ", n, " -- count: ", cnt++);
-        }
-    }
 
     return 0;
 }
