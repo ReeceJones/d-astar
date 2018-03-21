@@ -732,8 +732,6 @@ int main(string[] args)
     writeln();
     writeln(field);
     writeln("solved maze in ", sw.peek.total!"msecs", "ms");
-
+    
     return 0;
 }
-
-//TODO: add color support
