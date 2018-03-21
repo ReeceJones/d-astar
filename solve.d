@@ -9,6 +9,7 @@ import std.file: exists;
 import std.parallelism: parallel;
 
 bool showClosed = false, showOpen = false;
+bool col = false;
 uint uh = 0;
 
 immutable char cp = '*';
@@ -178,20 +179,23 @@ public:
         {
             foreach (c; s)
             {
-                if (c == cp)
+                if (col == true)
                 {
-                    ret ~= "\x1b[31m";
-                }
-                else if (c == cc)
-                {
-                    ret ~= "\x1b[32m";
-                }
-                else if (c == co)
-                {
-                    ret ~= "\x1b[34m";
+                    if (c == cp)
+                    {
+                        ret ~= "\x1b[91m";
+                    }
+                    else if (c == cc)
+                    {
+                        ret ~= "\x1b[92m";
+                    }
+                    else if (c == co)
+                    {
+                        ret ~= "\x1b[94m";
+                    }
                 }
                 ret ~= c;
-                if (c == cp || c == cc || c == co)
+                if ((c == cp || c == cc || c == co) && col == true)
                     ret ~= "\x1b[0m";
             }
             ret ~= '\n';
@@ -611,6 +615,7 @@ int main(string[] args)
                 writeln("\t--show-open: shows the open set of nodes, represented by \'x\'");
                 writeln("\t--manhattan: used manhattan distance for heuristic");
                 writeln("\t--euclidean: used euclidean distance for heuristic");
+                writeln("\t--color: use color for output");
                 return 1;
             break;
             case "--diagonal":
@@ -658,6 +663,9 @@ int main(string[] args)
             break;
             case "--euclidean":
                 uh = 2;
+            break;
+            case "--color":
+                col = true;
             break;
         }
     }
