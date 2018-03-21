@@ -183,18 +183,18 @@ public:
                 {
                     if (c == cp)
                     {
-                        ret ~= "\x1b[91m";
+                        ret ~= "\x1b[91m\x1b[100m";
                     }
                     else if (c == cc)
                     {
-                        ret ~= "\x1b[92m";
+                        ret ~= "\x1b[92m\x1b[100m";
                     }
                     else if (c == co)
                     {
-                        ret ~= "\x1b[94m";
+                        ret ~= "\x1b[94m\x1b[100m";
                     }
                 }
-                ret ~= c;
+                ret ~= "\x1b[19m" ~ c;
                 if ((c == cp || c == cc || c == co) && col == true)
                     ret ~= "\x1b[0m";
             }
