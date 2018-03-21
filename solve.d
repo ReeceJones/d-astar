@@ -173,7 +173,23 @@ public:
         foreach (s; this.field)
         {
             foreach (c; s)
+            {
+                if (c == '*')
+                {
+                    ret ~= "\x1b[31m";
+                }
+                else if (c == 'x')
+                {
+                    ret ~= "\x1b[32m";
+                }
+                else if (c == 'o')
+                {
+                    ret ~= "\x1b[34m";
+                }
                 ret ~= c;
+                if (c == '*' || c == 'x' || c == 'o')
+                    ret ~= "\x1b[0m";
+            }
             ret ~= '\n';
         }
         return ret;
@@ -253,10 +269,10 @@ Array!Node Astar(Node start, Node end, int width, int height, ref Field field, u
                     path.insertBack(tmp);
                 } while (tmp.parent !is null);
                 if (showClosed == true)
-                    foreach (z; closed.parallel)
+                    foreach (z; closed)
                         field.replace(z, 'o');
                 if (showOpen == true)
-                    foreach(z; open.parallel)
+                    foreach(z; open)
                         field.replace(z, 'x');
                 writeln("closed length: ", closed.length);
                 writeln("insert count: ", closed.insertCount);
