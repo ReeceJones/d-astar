@@ -11,6 +11,10 @@ import std.parallelism: parallel;
 bool showClosed = false, showOpen = false;
 uint uh = 0;
 
+immutable char cp = '*';
+immutable char cc = 'o';
+immutable char co = 'x';
+
 enum SolveFlags
 {
     NONE = 0,
@@ -174,20 +178,20 @@ public:
         {
             foreach (c; s)
             {
-                if (c == '*')
+                if (c == cp)
                 {
                     ret ~= "\x1b[31m";
                 }
-                else if (c == 'x')
+                else if (c == cc)
                 {
                     ret ~= "\x1b[32m";
                 }
-                else if (c == 'o')
+                else if (c == co)
                 {
                     ret ~= "\x1b[34m";
                 }
                 ret ~= c;
-                if (c == '*' || c == 'x' || c == 'o')
+                if (c == cp || c == cc || c == co)
                     ret ~= "\x1b[0m";
             }
             ret ~= '\n';
@@ -270,10 +274,10 @@ Array!Node Astar(Node start, Node end, int width, int height, ref Field field, u
                 } while (tmp.parent !is null);
                 if (showClosed == true)
                     foreach (z; closed)
-                        field.replace(z, 'o');
+                        field.replace(z, co);
                 if (showOpen == true)
                     foreach(z; open)
-                        field.replace(z, 'x');
+                        field.replace(z, cc);
                 writeln("closed length: ", closed.length);
                 writeln("insert count: ", closed.insertCount);
                 writeln("failed insert count: ", closed.errorCount);
@@ -722,7 +726,7 @@ int main(string[] args)
     foreach(n; fastestPath[1..$-1].parallel)
     {
        //writeln(n);
-       field.replace(n, '*');
+       field.replace(n, cp);
     }
     
     writeln();
