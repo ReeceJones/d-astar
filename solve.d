@@ -175,28 +175,56 @@ public:
     override string toString()
     {
         string ret;
+        version (Windows)
+            if (col == true)
+                writeln("[warning] color is not supported on windows");
         foreach (s; this.field)
         {
             foreach (c; s)
             {
-                if (col == true)
+                version (OSX)
                 {
-                    if (c == cp)
+                    if (col == true)
                     {
-                        ret ~= "\x1b[91m\x1b[100m";
-                    }
-                    else if (c == cc)
-                    {
-                        ret ~= "\x1b[92m\x1b[100m";
-                    }
-                    else if (c == co)
-                    {
-                        ret ~= "\x1b[94m\x1b[100m";
+                        if (c == cp)
+                        {
+                            ret ~= "\x1b[91m\x1b[100m";
+                        }
+                        else if (c == cc)
+                        {
+                            ret ~= "\x1b[92m\x1b[100m";
+                        }
+                        else if (c == co)
+                        {
+                            ret ~= "\x1b[94m\x1b[100m";
+                        }
                     }
                 }
-                ret ~= "\x1b[19m" ~ c;
-                if ((c == cp || c == cc || c == co) && col == true)
-                    ret ~= "\x1b[0m";
+                version (linux)
+                {
+                    if (col == true)
+                    {
+                        if (c == cp)
+                        {
+                            ret ~= "\x1b[91m\x1b[100m";
+                        }
+                        else if (c == cc)
+                        {
+                            ret ~= "\x1b[92m\x1b[100m";
+                        }
+                        else if (c == co)
+                        {
+                            ret ~= "\x1b[94m\x1b[100m";
+                        }
+                    }
+                }
+                ret ~= c;
+                version (OSX)
+                    if ((c == cp || c == cc || c == co) && col == true)
+                        ret ~= "\x1b[0m";
+                version (linux)
+                    if ((c == cp || c == cc || c == co) && col == true)
+                        ret ~= "\x1b[0m";
             }
             ret ~= '\n';
         }
