@@ -35,7 +35,7 @@ public:
                     switch (c)
                     {
                         default:
-                            cwrite(("" ~ c).color(fg.init));
+                            cwrite(("" ~ c).color(fg.init, bg.init, mode.bold));
                         break;
                         case cp:
                             cwrite(("" ~ c).color(fg.light_red));

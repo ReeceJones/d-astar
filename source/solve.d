@@ -192,9 +192,9 @@ int main(string[] args)
     uint mode = -1;
     int SIZE;
     string file;
-    version (windowsstandalone)
+    version (standalone)
     {
-        write("size/file: ");
+        write("mode (size/file): ");
         string type;
         readf!"%s\n"(type);
         if (type == "size")
@@ -230,7 +230,7 @@ int main(string[] args)
                 return 1;
             }
         }
-        write("horizontal/diagonal/both: ");
+        write("movable to (horizontal/diagonal/both): ");
         string mov;
         readf!"%s\n"(mov);
         switch (mov)
@@ -248,7 +248,7 @@ int main(string[] args)
                 uflag |= SolveFlags.HORIZONTAL | SolveFlags.DIAGONAL;
             break;
         }
-        write("dijkstra/euclidean/manhattan: ");
+        write("heuristic (dijkstra/euclidean/manhattan): ");
         string hs;
         readf!"%s\n"(hs);
         switch (hs)
@@ -266,7 +266,7 @@ int main(string[] args)
                 uh = 1;
             break;
         }
-        write("none/show closed/show open/both: ");
+        write("show extras (none/show closed/show open/both): ");
         string sh;
         readf!"%s\n"(sh);
         switch (sh)
@@ -477,7 +477,7 @@ int main(string[] args)
     field.display();
     writeln("solved maze in ", sw.peek.total!"msecs", "ms");
     
-    version (windowsstandalone)
+    version (standalone)
     {
         readln();
     }
