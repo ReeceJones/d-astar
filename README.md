@@ -1,6 +1,6 @@
+![alt text](https://i.imgur.com/K5W4tNx.png)
 # d-astar
 What is probably an inefficient implementation of the a* algorithm.
-![alt text](https://i.imgur.com/K5W4tNx.png)
 # Requirements
 -DMD
 -dub
