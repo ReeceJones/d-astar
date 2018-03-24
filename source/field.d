@@ -1,7 +1,9 @@
 module field;
 import node;
 import defs;
-import std.stdio: writeln;
+import std.stdio;
+import core.sys.windows.windows;
+import colorize;
 
 class Field
 {
@@ -21,12 +23,46 @@ public:
         }
         this.mov = movable;
     }
-    override string toString()
+    void display()
+    {
+        foreach (s; this.field)
+        {
+            if (col == true)
+            {
+                foreach (c; s)
+                {
+                    HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
+                    switch (c)
+                    {
+                        default:
+                            cwrite(("" ~ c).color(fg.init));
+                        break;
+                        case cp:
+                            cwrite(("" ~ c).color(fg.light_red));
+                        break;
+                        case cc:
+                            cwrite(("" ~ c).color(fg.light_green));
+                        break;
+                        case co:
+                            cwrite(("" ~ c).color(fg.light_blue));
+                        break;
+                    }
+                }
+                writeln();
+            }
+            else
+                writeln(s);
+        }
+    }
+    /*override string toString()
     {
         string ret;
         version (Windows)
+        {
             if (col == true)
                 writeln("[warning] color is not supported on windows");
+
+        }
         foreach (s; this.field)
         {
             foreach (c; s)
@@ -78,7 +114,7 @@ public:
             ret ~= '\n';
         }
         return ret;
-    }
+    }*/
     void replace(Node n, char x)
     {
         this.field[n.y][n.x] = x;

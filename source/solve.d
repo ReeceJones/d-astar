@@ -1,4 +1,4 @@
-import std.stdio: writeln, File;
+import std.stdio;
 import std.container.array: Array;
 import std.math: sqrt, abs, pow;
 import std.container.binaryheap: BinaryHeap;
@@ -131,7 +131,7 @@ Array!Node Astar(Node start, Node end, int width, int height, ref Field field, u
 
 int main(string[] args)
 {
-        version (stacktest)
+    version (stacktest)
     {
         writeln("Node stack testing");
         NodeStack stack = new NodeStack();
@@ -187,85 +187,216 @@ int main(string[] args)
             writeln("Node: ", n, " -- count: ", cnt++);
         }
     }
-    if (args.length <= 1)
-    {
-        writeln("[error] no parameters provided");
-        return 1;
-    }
+
     uint uflag = 0;
     uint mode = -1;
     int SIZE;
     string file;
-    for (uint i = 1; i < args.length; i++)
+    version (windowsstandalone)
     {
-        switch (args[i])
+        write("size/file: ");
+        string type;
+        readf!"%s\n"(type);
+        if (type == "size")
+            mode = 0;
+        else if (type == "file")
+            mode = 1;
+        else
+        {
+            writeln("[error] invalid input");
+            return 1;
+        }
+        string sz = mode == 1 ? "file: " : "size: ";
+        write(sz);
+        readf!"%s\n"(sz);
+        if (mode == 1)
+        {
+            file = sz;
+            if (exists(file) == false)
+            {
+                writeln("[error] file does not exist");
+                return 1;
+            }
+        }
+        else
+        {
+            try
+            {
+                SIZE = to!int(sz);
+            }
+            catch (ConvException)
+            {
+                writeln("[error] \'", sz, "\' is not a number");
+                return 1;
+            }
+        }
+        write("horizontal/diagonal/both: ");
+        string mov;
+        readf!"%s\n"(mov);
+        switch (mov)
         {
             default:
-                writeln("[error] \'", args[i], "\' unrecognized");
+            writeln("[error] \'" ~ mov ~ "\' unrecognized");
             return 1;
-            case "--help":
-                writeln("commands: ");
-                writeln("\t--help: list of commands");
-                writeln("\t--diagonal: move diagonally");
-                writeln("\t--horizontal: move up, down, left, and right");
-                writeln("\t--break-ties: use a tie-breaker");
-                writeln("\t--size <n>: create a maze of n width and n height and solve it");
-                writeln("\t--file <f>: read maze from file and solve it. Whitespace must be used in the paths, and start must be marked by @ character, and end marked by X character");
-                writeln("\t--show-closed: shows the closed set of nodes, represented by \'o\'");
-                writeln("\t--show-open: shows the open set of nodes, represented by \'x\'");
-                writeln("\t--manhattan: used manhattan distance for heuristic");
-                writeln("\t--euclidean: used euclidean distance for heuristic");
-                writeln("\t--color: use color for output");
-            return 1;
-            case "--diagonal":
-                uflag |= SolveFlags.DIAGONAL;
-            break;
-            case "--horizontal":
+            case "horizontal":
                 uflag |= SolveFlags.HORIZONTAL;
             break;
-            case "--break-ties":
-                uflag |= SolveFlags.TIE_BREAKER;
+            case "diagonal":
+                uflag |= SolveFlags.DIAGONAL;
             break;
-            case "--size":
-                try
-                {
-                    SIZE = to!int(args[i + 1]);
-                }
-                catch (ConvException)
-                {
-                    writeln("[error] \'", args[i + 1], "\' is not a number");
-                    return 1;
-                }
-                //skip the next argument
-                i += 1;
-                mode = 0;
+            case "both":
+                uflag |= SolveFlags.HORIZONTAL | SolveFlags.DIAGONAL;
             break;
-            case "--file":
-                file = args[i + 1];
-                if (exists(file) == false)
-                {
-                    writeln("[error] file does not exist");
-                    return 1;
-                }
-                i += 1;
-                mode = 1;
-            break;
-            case "--show-closed":
-                showClosed = true;
-            break;
-            case "--show-open":
-                showOpen = true;
-            break;
-            case "--manhattan":
-            //yes i know this is pointless
-                uh = 1;
-            break;
-            case "--euclidean":
+        }
+        write("dijkstra/euclidean/manhattan: ");
+        string hs;
+        readf!"%s\n"(hs);
+        switch (hs)
+        {
+            default:
+            writeln("[error] \'" ~ hs ~ "\' unrecognized");
+            return 1;
+            case "dijkstra:":
                 uh = 2;
             break;
-            case "--color":
+            case "euclidean":
+                uh = 2;
+            break;
+            case "manhattan":
+                uh = 1;
+            break;
+        }
+        write("none/show closed/show open/both: ");
+        string sh;
+        readf!"%s\n"(sh);
+        switch (sh)
+        {
+            default:
+            writeln("[error] \'" ~ sh ~ "\' unrecognized");
+            return 1;
+            case "show open:":
+                showOpen = true;
+            break;
+            case "show closed":
+                showClosed = true;
+            break;
+            case "both":
+                showOpen = true;
+                showClosed = true;
+            break;
+            case "none":
+                showOpen = false;
+                showClosed = false;
+            break;
+        }
+        write("color (yes/no): ");
+        string co;
+        readf!"%s\n"(co);
+        switch (co)
+        {
+            default:
+            writeln("[error] \'" ~ co ~ "\' unrecognized");
+            return 1;
+            case "yes":
                 col = true;
             break;
+            case "no":
+                col = false;
+            break;
+        }
+        write("break ties (yes/no): ");
+        string bt;
+        readf!"%s\n"(bt);
+        switch (bt)
+        {
+            default:
+            writeln("[error] \'" ~ bt ~ "\' unrecognized");
+            return 1;
+            case "yes":
+                uflag |= SolveFlags.TIE_BREAKER;
+            break;
+            case "no":
+            break;
+        }
+    }
+    else
+    {
+        if (args.length <= 1)
+        {
+            writeln("[error] no parameters provided");
+            return 1;
+        }
+        for (uint i = 1; i < args.length; i++)
+        {
+            switch (args[i])
+            {
+                default:
+                    writeln("[error] \'", args[i], "\' unrecognized");
+                return 1;
+                case "--help":
+                    writeln("commands: ");
+                    writeln("\t--help: list of commands");
+                    writeln("\t--diagonal: move diagonally");
+                    writeln("\t--horizontal: move up, down, left, and right");
+                    writeln("\t--break-ties: use a tie-breaker");
+                    writeln("\t--size <n>: create a maze of n width and n height and solve it");
+                    writeln("\t--file <f>: read maze from file and solve it. Whitespace must be used in the paths, and start must be marked by @ character, and end marked by X character");
+                    writeln("\t--show-closed: shows the closed set of nodes, represented by \'o\'");
+                    writeln("\t--show-open: shows the open set of nodes, represented by \'x\'");
+                    writeln("\t--manhattan: used manhattan distance for heuristic");
+                    writeln("\t--euclidean: used euclidean distance for heuristic");
+                    writeln("\t--color: use color for output");
+                return 1;
+                case "--diagonal":
+                    uflag |= SolveFlags.DIAGONAL;
+                break;
+                case "--horizontal":
+                    uflag |= SolveFlags.HORIZONTAL;
+                break;
+                case "--break-ties":
+                    uflag |= SolveFlags.TIE_BREAKER;
+                break;
+                case "--size":
+                    try
+                    {
+                        SIZE = to!int(args[i + 1]);
+                    }
+                    catch (ConvException)
+                    {
+                        writeln("[error] \'", args[i + 1], "\' is not a number");
+                        return 1;
+                    }
+                    //skip the next argument
+                    i += 1;
+                    mode = 0;
+                break;
+                case "--file":
+                    file = args[i + 1];
+                    if (exists(file) == false)
+                    {
+                        writeln("[error] file does not exist");
+                        return 1;
+                    }
+                    i += 1;
+                    mode = 1;
+                break;
+                case "--show-closed":
+                    showClosed = true;
+                break;
+                case "--show-open":
+                    showOpen = true;
+                break;
+                case "--manhattan":
+                //yes i know this is pointless
+                    uh = 1;
+                break;
+                case "--euclidean":
+                    uh = 2;
+                break;
+                case "--color":
+                    col = true;
+                break;
+            }
         }
     }
     if (mode == cast(uint)-1)
@@ -337,8 +468,19 @@ int main(string[] args)
     }
     
     writeln();
-    writeln(field);
+    // version(Windows)
+    // {
+    //     field.windowsDisplay();
+    // }
+    // else
+    //     writeln(field);
+    field.display();
     writeln("solved maze in ", sw.peek.total!"msecs", "ms");
     
+    version (windowsstandalone)
+    {
+        readln();
+    }
+
     return 0;
 }
