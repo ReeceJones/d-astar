@@ -629,8 +629,7 @@ int main(string[] args)
         {
             default:
                 writeln("[error] \'", args[i], "\' unrecognized");
-                return 1;
-            break;
+            return 1;
             case "--help":
                 writeln("commands: ");
                 writeln("\t--help: list of commands");
@@ -644,8 +643,7 @@ int main(string[] args)
                 writeln("\t--manhattan: used manhattan distance for heuristic");
                 writeln("\t--euclidean: used euclidean distance for heuristic");
                 writeln("\t--color: use color for output");
-                return 1;
-            break;
+            return 1;
             case "--diagonal":
                 uflag |= SolveFlags.DIAGONAL;
             break;

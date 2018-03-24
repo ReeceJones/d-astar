@@ -3,3 +3,14 @@
 *.o
 *.obj
 solve
+.dub
+docs.json
+__dummy.html
+docs/
+d-astar.so
+d-astar.dylib
+d-astar.dll
+d-astar.a
+d-astar.lib
+d-astar-test-*
+*.lst

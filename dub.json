@@ -1,0 +1,25 @@
+{
+	"name": "d-astar",
+	"authors": [
+		"reece"
+	],
+	"description": "A minimal D application.",
+	"copyright": "Copyright © 2018, reece",
+	"license": "MIT",
+	"targetType": "executable",
+	"targetPath": "bin/",
+	"targetName": "solve",
+	"configurations": 
+	[
+		{
+			"name": "release",
+			"buildOptions": 
+			[
+				"releaseMode",
+				"inline",
+				"noBoundsCheck",
+				"optimize"
+			]
+		}
+	]
+}
