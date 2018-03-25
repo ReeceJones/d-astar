@@ -2,7 +2,6 @@ module field;
 import node;
 import defs;
 import std.stdio;
-import core.sys.windows.windows;
 import colorize;
 
 class Field
@@ -31,7 +30,6 @@ public:
             {
                 foreach (c; s)
                 {
-                    HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
                     switch (c)
                     {
                         default:
