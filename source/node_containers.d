@@ -137,12 +137,14 @@ public:
         this.cnt++;
             return true;
         }
+        //iterate through the private array of nodes
+        //if we find a node with matching coordinates, but a lower f-value we will replace it
         foreach (c; this.set)
         {
             if (n.x == c.x && n.y == c.y && n.f < c.f)
             {
                 c = n;
-            this.cnt++;
+                this.cnt++;
                 return true;
             }
             else if (n.x == c.x && n.y == c.y)
@@ -159,6 +161,7 @@ public:
     {
         return this.set.length;
     }
+    //check to see if a node exists in the set
     bool nodeExists(Node n)
     {
         foreach (c; this.set)
@@ -166,6 +169,7 @@ public:
                 return true;
         return false;
     }
+    //for debugging purposes
     uint insertCount()
     {
         return this.cnt;
@@ -181,6 +185,7 @@ public:
         popFront
         empty
     */
+    //for iterating through the set using input ranges
     @property bool empty()
     {
         if (this.frontCheck == false)
@@ -210,12 +215,15 @@ public:
         this.hasNode = false;
     }
 private:
+    //debugging variables
     uint cnt;
     uint errcnt;
 
+    //input range stuff
     Node n;
     uint index;
     bool hasNode, frontCheck;
 
+    //array of nodes that makes up the set
     Node[] set;
 }

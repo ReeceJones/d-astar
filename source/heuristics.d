@@ -23,6 +23,7 @@ double heuristic(Node current, Node start, Node end, bool breakTies)
             result = abs(sqrt(cast(float)pow(current.x - end.x, 2) + cast(float)pow(current.y - end.y, 2)));
         break;
     }
+    //if we are breaking ties we want to actually do it
     if (breakTies == true)
     {
         //tie-breaker

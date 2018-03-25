@@ -11,7 +11,9 @@ import node;
 import defs;
 import nodecontainers;
 import field;
+//lots of imports
 
+//check to see if a node exists in a given array
 bool nodeExists(Array!Node nodes, Node n)
 {
     foreach (tmp; nodes)
@@ -20,40 +22,31 @@ bool nodeExists(Array!Node nodes, Node n)
     return false;
 }
 
+//get the best node in a nodestack
 Node getBestNode(ref NodeStack stack, ref NodeSet closed)
 {
     bool valid = false;
     Node bestNode;
     do
     {
+        //remove the best node and assign it to bestNode
         bestNode = stack.pop();
+        //check to see if it exists in the closed set
         if (closed.nodeExists(bestNode) == false)
             valid = true;
     } while (valid == false);
     return bestNode;
 }
 
-Node getBestNode(ref BinaryHeap!(Node[]) heap, ref NodeSet closed)
-{
-    bool valid = false;
-    Node bestNode;
-    do
-    {
-        bestNode = heap.front();
-        if (closed.nodeExists(bestNode) == false)
-            valid = true;
-        else
-            heap.popFront();
-    } while (valid == false);
-    heap.popFront();
-    return bestNode;
-}
-
+//get successors to a given node position
 Array!Node getSuccessors(Node current, Node start, Node end, uint flags)
 {
     Array!Node successors;
+    //lambda for easily adding nodes to an array
     static auto push = function(ref Array!Node a, Node n) => a.insertBack(n);
+    //whether or not to break ties
     bool breakTies = !(flags & SolveFlags.TIE_BREAKER) == 0;
+    //if we can move up, left, right, down
     if (flags & SolveFlags.HORIZONTAL)
     {
         push(successors, new Node(current.x + 1, current.y, current, end, start, breakTies));
@@ -61,7 +54,7 @@ Array!Node getSuccessors(Node current, Node start, Node end, uint flags)
         push(successors, new Node(current.x, current.y + 1, current, end, start, breakTies));
         push(successors, new Node(current.x, current.y - 1, current, end, start, breakTies));
     }
-
+    //if the diagonal flag is set
     if (flags & SolveFlags.DIAGONAL)
     {
         push(successors, new Node(current.x + 1, current.y + 1, current, end, start, breakTies));
@@ -72,22 +65,30 @@ Array!Node getSuccessors(Node current, Node start, Node end, uint flags)
     return successors;
 }
 
+//solve a maze using the a* algorithm
 Array!Node Astar(Node start, Node end, int width, int height, ref Field field, uint expected,
                  uint flags = SolveFlags.HORIZONTAL | SolveFlags.DIAGONAL | SolveFlags.TIE_BREAKER)
 {
-    //BinaryHeap!(Node[]) open = BinaryHeap!(Node[])([]);
+    //open set containing nodes that are being considered
     NodeStack open = new NodeStack();
+    //closed set containing nodes we've traveled to
     NodeSet closed = new NodeSet();
+    //we need a starting point, so why don't we start at the start
     open.insert(start);
+    //if there are no nodes left being considered there is no path
     while (open.length != 0)
     {
+        //q is the best node in the open set
         Node q = getBestNode(open, closed);
         //get potential nodes
         Array!Node successors = getSuccessors(q, end, start, flags);
+        //iterate the successors and insert them into the open set
         foreach(n; successors)
         {
+            //if a successor is the end we want to travel to it
             if (n.x == end.x && n.y == end.y)
             {
+                //trace back the best path
                 Array!Node path;
                 Node tmp = n;
                 path.insertBack(tmp);
@@ -102,6 +103,7 @@ Array!Node Astar(Node start, Node end, int width, int height, ref Field field, u
                 if (showOpen == true)
                     foreach(z; open)
                         field.replace(z, cc);
+                //just some statistics
                 writeln("closed length: ", closed.length);
                 writeln("insert count: ", closed.insertCount);
                 writeln("failed insert count: ", closed.errorCount);
@@ -120,17 +122,20 @@ Array!Node Astar(Node start, Node end, int width, int height, ref Field field, u
             }
         }
         closed.insert(q);
+        //a quick shortcut for making sure that we don't get stuck
         if (closed.length == expected)
         {
             //return an empty array if we cannot find a path
             return Array!Node();
         }
     }
+    //return an empty array
     return Array!Node();
 }
 
 int main(string[] args)
 {
+    //testing the stack and set containers
     version (stacktest)
     {
         writeln("Node stack testing");
@@ -188,10 +193,12 @@ int main(string[] args)
         }
     }
 
+    //variables used to solve the maze
     uint uflag = 0;
     uint mode = -1;
     int SIZE;
     string file;
+    //get what the user wants to do with the maze
     version (standalone)
     {
         write("mode (size/file): ");
@@ -409,9 +416,11 @@ int main(string[] args)
         writeln("[error] invalid range");
         return 1;
     }
+    //create a new field
     Field field = new Field(SIZE, SIZE, ' ', ' ');
     int width = 0, height = 0, exp = 0;
     Node start, end;
+    //we have to find the starting and end point in the maze
     if (mode == 1)
     {
         field.reset();
@@ -463,22 +472,16 @@ int main(string[] args)
     writeln('\n');
     foreach(n; fastestPath[1..$-1].parallel)
     {
-       //writeln(n);
        field.replace(n, cp);
     }
     
     writeln();
-    // version(Windows)
-    // {
-    //     field.windowsDisplay();
-    // }
-    // else
-    //     writeln(field);
     field.display();
     writeln("solved maze in ", sw.peek.total!"msecs", "ms");
     
     version (standalone)
     {
+        //let the user see the output. they have to press enter to end the program
         readln();
     }
 

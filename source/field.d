@@ -4,9 +4,11 @@ import defs;
 import std.stdio;
 import colorize;
 
+//used for outputting result and checking if its possible to move to certain places
 class Field
 {
 public:
+    //construct a field of a given width and height, with what the whitespace will be made of and what character can be moved to
     this(int width, int height, char whitespace, char movable)
     {
         this.width = width;
@@ -22,6 +24,7 @@ public:
         }
         this.mov = movable;
     }
+    //display the field
     void display()
     {
         foreach (s; this.field)
@@ -52,71 +55,12 @@ public:
                 writeln(s);
         }
     }
-    /*override string toString()
-    {
-        string ret;
-        version (Windows)
-        {
-            if (col == true)
-                writeln("[warning] color is not supported on windows");
-
-        }
-        foreach (s; this.field)
-        {
-            foreach (c; s)
-            {
-                version (OSX)
-                {
-                    if (col == true)
-                    {
-                        if (c == cp)
-                        {
-                            ret ~= "\x1b[91m\x1b[100m";
-                        }
-                        else if (c == cc)
-                        {
-                            ret ~= "\x1b[92m\x1b[100m";
-                        }
-                        else if (c == co)
-                        {
-                            ret ~= "\x1b[94m\x1b[100m";
-                        }
-                    }
-                }
-                version (linux)
-                {
-                    if (col == true)
-                    {
-                        if (c == cp)
-                        {
-                            ret ~= "\x1b[91m\x1b[100m";
-                        }
-                        else if (c == cc)
-                        {
-                            ret ~= "\x1b[92m\x1b[100m";
-                        }
-                        else if (c == co)
-                        {
-                            ret ~= "\x1b[94m\x1b[100m";
-                        }
-                    }
-                }
-                ret ~= c;
-                version (OSX)
-                    if ((c == cp || c == cc || c == co) && col == true)
-                        ret ~= "\x1b[0m";
-                version (linux)
-                    if ((c == cp || c == cc || c == co) && col == true)
-                        ret ~= "\x1b[0m";
-            }
-            ret ~= '\n';
-        }
-        return ret;
-    }*/
+    //replace a node with a certain character
     void replace(Node n, char x)
     {
         this.field[n.y][n.x] = x;
     }
+    //add a line to the field
     void pushln(string ln)
     {
         char[] build;
@@ -124,10 +68,12 @@ public:
             build ~= c;
         this.field ~= build;
     }
+    //reset the field to being empty
     void reset()
     {
         this.field = [][];
     }
+    //check if we can move to a certain coordinate
     bool movable(Node n)
     {
         if (n.x >= 0 && n.x < this.field[0].length && n.y >= 0 && n.y < this.field.length)
@@ -135,7 +81,10 @@ public:
         return false;
     }
 private:
+    //width and height of the field
     int width, height;
+    //what character we can move to
     char mov;
+    //array containing field
     char[][] field;
 }
