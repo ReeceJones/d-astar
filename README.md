@@ -1,5 +1,5 @@
 ![alt text](https://i.imgur.com/K5W4tNx.png)
-![alt text](https://imgur.com/uMzMuT6.png | width = 200)
+![alt text](https://imgur.com/uMzMuT6.png | width=200)
 # d-astar
 What is probably an inefficient implementation of the a* algorithm.
 # Requirements
