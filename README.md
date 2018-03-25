@@ -2,10 +2,10 @@
 # d-astar
 What is probably an inefficient implementation of the a* algorithm.
 # Requirements
--DMD
--dub
+- DMD
+- dub
 # Dependencies
--colorize (1.0.5)
+- colorize (1.0.5)
 # Buidling
 Build with dmd using the following command `dub build`. To build the standalone windows version add the flag `--config=standalone` when compiling.
 # Usage
